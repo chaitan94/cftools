@@ -30,9 +30,12 @@ def get_problem_tests(contest, problem):
 	elif status == 404:
 		print("Requested problem not found (404)")
 
-def run_tests(contest, problem):
+def run_tests(contest, problem, language):
 	pcode = contest+problem
-	srcfile = pcode + '.cpp'
+	if language == 'cpp':
+                srcfile = pcode + '.cpp'
+        elif language == 'python':
+                srcfile = pcode + '.py'
 	files = os.listdir('.')
 	inputs = filter(lambda x: re.match(pcode + "\d*\.in", x), files)
 	outputs = filter(lambda x: re.match(pcode + "\d*\.out", x), files)
@@ -49,24 +52,30 @@ def run_tests(contest, problem):
 	if not os.path.isfile(srcfile):
 		print('%s doesn\'t exist' % srcfile)
 		exit(1)
-	os.system("g++ %s -o %s" % (srcfile, pcode))
+	if language == 'cpp':
+		os.system("g++ %s -o %s" % (srcfile, pcode))
 	tests = zip(inputs, outputs)
 	for i in xrange(len(tests)):
 		inf, outf = tests[i]
-		res = subprocess.check_output('./%s < %s' % (pcode, inf), shell=True)
+		if language == 'cpp':
+			res = subprocess.check_output('./%s < %s' % (pcode, inf), shell=True)
+		elif language == 'python':
+                        res = subprocess.check_output('python %s < %s' % (srcfile, inf), shell=True)
 		res = res.strip()
 		f = open(outf, "r")
 		expected = f.read().strip()
 		f.close()
 		verdict = "PASS" if res == expected else "FAIL"
 		print("Test case #%d: %s" % (i+1, verdict))
-	os.remove(pcode)
+	if language == 'cpp':	
+		os.remove(pcode)
 
 @click.command()
 @click.option('--get', '-g', flag_value=True, help='Download test cases')
 @click.argument('contest')
 @click.argument('problem')
-def main(get, contest, problem):
+@click.argument('language', required=False, default='cpp')
+def main(get, contest, problem, language):
 	""" Codeforces tools by BKC """
 	if not contest.isdigit():
 		print("Not a valid contest number")
@@ -77,7 +86,7 @@ def main(get, contest, problem):
 	problem = problem.upper()
 
 	if get: get_problem_tests(contest, problem)
-	else: run_tests(contest, problem)
+	else: run_tests(contest, problem, language)
 
 if __name__ == '__main__':
 	main()
