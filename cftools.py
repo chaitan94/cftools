@@ -12,7 +12,7 @@ def get_problem_tests(contest, problem):
 	response = requests.get(url)
 	status = response.status_code
 	if status == 200:
-		page = BeautifulSoup(response.text)
+		page = BeautifulSoup(response.text, "lxml")
 		inputs = page.select("div.input pre")
 		outputs = page.select("div.output pre")
 		for i in xrange(1, len(inputs)+1):
